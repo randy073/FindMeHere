@@ -57,6 +57,7 @@ import com.google.firebase.database.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -143,9 +144,6 @@ public class RealTimeLocationActivity extends FragmentActivity implements Locati
 
     private ShareActionProvider mShareActionProvider;
 
-
-    private String connectedToChannel;
-
     private ProgressDialog ringProgressDialog;
 
 
@@ -156,6 +154,10 @@ public class RealTimeLocationActivity extends FragmentActivity implements Locati
     private DatabaseReference mDatabase;
 
     private FirebaseUser user;
+
+    private List syncUserList;
+
+    final Context context = this;
 
     // private PolylineOptions mPolylineOptions;
 
@@ -201,46 +203,15 @@ public class RealTimeLocationActivity extends FragmentActivity implements Locati
 
         user = FirebaseAuth.getInstance().getCurrentUser();
 
+        syncUserList = new ArrayList<HashMap<String, HashMap<String, Double>>>();
 
+        String sender = getIntent().getExtras().getString("sender");
 
-        mPubnub = new Pubnub("pub-c-40df52d6-aa79-4ea8-a676-32ffacbc74c7", "sub-c-939b900a-61a7-11e5-8a6a-02ee2ddab7fe");
-
-
-        connectedToChannel = getIntent().getExtras().getString("sender");
-
-        Callback subscribeCallback = new Callback() {
-
-            @Override
-            public void successCallback(String channel, Object message) {
-                JSONObject jsonMessage = (JSONObject) message;
-                try {
-                    double mLat = jsonMessage.getDouble("lat");
-                    double mLng = jsonMessage.getDouble("lng");
-                    mLatLng = new LatLng(mLat, mLng);
-                    broadcastLocation(getLocation());
-                    ringProgressDialog.cancel();
-                } catch (JSONException e) {
-                    Log.e("callback error", e.toString());
-                }
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateCamera();
-                        updateMarker();
-                    }
-                });
-            }
-
-            @Override
-            public void errorCallback(String channel, PubnubError error) {
-                super.errorCallback(channel, error);
-            }
-        };
-
-        try {
-            mPubnub.subscribe(connectedToChannel, subscribeCallback);
-        } catch (PubnubException e) {
+        if(syncUserList != null && !syncUserList.contains(sender)){
+            HashMap<String, Double> locMap = new HashMap<String, Double>();
+            HashMap<String, HashMap<String, Double>> senderMap = new HashMap<String, HashMap<String, Double>>();
+            senderMap.put(sender, locMap);
+            syncUserList.add(senderMap);
         }
 
         launchBarDialog();
@@ -423,7 +394,7 @@ public class RealTimeLocationActivity extends FragmentActivity implements Locati
      */
     public void onConnected(Bundle bundle) {
         currentLocation = getLocation();
-        broadcastLocation(currentLocation);
+        syncLocation(currentLocation);
         startPeriodicUpdates();
     }
 
@@ -477,19 +448,43 @@ public class RealTimeLocationActivity extends FragmentActivity implements Locati
         }
         // Update map radius indicator
         doMapQuery();
-        broadcastLocation(location);
+        syncLocation(location);
     }
 
-    private void broadcastLocation(Location location) {
+    private void syncLocation(Location location) {
+        UserLocation userLocation = new UserLocation(user.getUid(), location.getLatitude(), location.getLongitude());
+        mDatabase.child("locations").child(user.getUid()).setValue(userLocation);
+    }
 
-        JSONObject message = new JSONObject();
-        try {
-            message.put("lat", location.getLatitude());
-            message.put("lng", location.getLongitude());
-            message.put("alt", location.getAltitude());
-        } catch (JSONException e) {
-        }
-        mDatabase.child("locations").child(user.getUid()).setValue(message);
+    private void addOnChildChangedListener(String uid){
+        ChildEventListener childListener = new ChildEventListener() {
+
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+
+            }
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+                Toast.makeText(context, "Failed to sync locations.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        };
     }
 
 
