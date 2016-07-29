@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "629275668200",
+    "firebase_url": "https://findmehere-724a2.firebaseio.com",
+    "project_id": "findmehere-724a2",
+    "storage_bucket": "findmehere-724a2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:629275668200:android:1b85caed7225cf91",
+        "android_client_info": {
+          "package_name": "com.randy073.findmehere"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "629275668200-91n701hlpq8613lb1suudfoo5id9to47.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6XwlqcwyxDODvbnNGkK27yawj-8doFWg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
